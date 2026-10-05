@@ -1,7 +1,9 @@
 """Flask API for the QML encodings demo.
 
-Local:   python backend/app.py   -> http://localhost:5000 (also serves the frontend)
-Vercel:  backend/api/index.py imports ``app`` from here.
+Run:  python backend/app.py   -> http://localhost:5000 (also serves the frontend)
+
+The public GitHub Pages site does not need this server: it uses the JavaScript
+port in frontend/js/quantum.js instead.
 """
 from __future__ import annotations
 
@@ -120,7 +122,7 @@ def superposition():
     return jsonify(report)
 
 
-# ------------------------------------------------------------- static frontend (local dev)
+# ------------------------------------------------------------- static frontend (local use)
 
 @app.get("/")
 def index():

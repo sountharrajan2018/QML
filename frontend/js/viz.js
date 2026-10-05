@@ -66,7 +66,9 @@
     }
   }
 
-  function circuit(container, n, gates) {
+  // opts.upTo = k highlights gate k-1 as "just applied" and fades gates >= k.
+  // opts.onGateClick(i) makes every gate clickable.
+  function circuit(container, n, gates, opts = {}) {
     const next = new Array(n).fill(0), placed = [];
     for (const g of gates) {
       const qs = [...g.targets, ...(g.controls || [])];
@@ -88,10 +90,19 @@
       el("line", { x1: left - 8, x2: W - 20, y1: y(q), y2: y(q), style: "stroke:var(--text-muted);stroke-width:1.2" }, s);
       el("text", { x: 6, y: y(q) + 4, text: `q${q} |0⟩`, style: "font-family:var(--mono);font-size:12px;fill:var(--text-secondary)" }, s);
     }
-    const boxStyle = "fill:var(--surface-1);stroke:var(--accent);stroke-width:1.5";
-    for (const { g, col, lo, hi } of placed) {
+    const stepping = opts.upTo !== undefined;
+    placed.forEach(({ g, col, lo, hi }, gi) => {
       const cx = x(col);
-      const grp = el("g", {}, s);
+      const grp = el("g", { class: "gate" }, s);
+      const state = !stepping ? "done" : gi < opts.upTo - 1 ? "done" : gi === opts.upTo - 1 ? "current" : "pending";
+      if (state === "pending") grp.style.opacity = "0.28";
+      if (opts.onGateClick) {
+        grp.style.cursor = "pointer";
+        grp.addEventListener("click", () => opts.onGateClick(gi));
+      }
+      const boxStyle = state === "current"
+        ? "fill:var(--accent-soft);stroke:var(--accent);stroke-width:2.5"
+        : "fill:var(--surface-1);stroke:var(--accent);stroke-width:1.5";
       hover(grp, `<b>${g.gate}</b>${g.params && g.params.length && g.gate !== "PREP" && g.gate !== "SIGN" ? ` &theta; = ${fmt(g.params[0], 4)}` : ""}<br>qubits: ${[...(g.controls || []).map((c, k) => `q${c}=${(g.ctrl_state || [])[k] ?? 1} (ctrl)`), ...g.targets.map((t) => "q" + t)].join(", ")}`);
       if (g.controls && g.controls.length) {
         el("line", { x1: cx, x2: cx, y1: y(lo), y2: y(hi), style: "stroke:var(--accent);stroke-width:1.5" }, grp);
@@ -105,7 +116,7 @@
         el("circle", { cx, cy: y(t), r: 11, style: "fill:var(--surface-1);stroke:var(--accent);stroke-width:1.5" }, grp);
         el("line", { x1: cx - 11, x2: cx + 11, y1: y(t), y2: y(t), style: "stroke:var(--accent);stroke-width:1.5" }, grp);
         el("line", { x1: cx, x2: cx, y1: y(t) - 11, y2: y(t) + 11, style: "stroke:var(--accent);stroke-width:1.5" }, grp);
-        continue;
+        return;
       }
       const span = g.gate === "RZZ" || g.gate === "PREP" || g.gate === "SIGN";
       const t0 = span ? Math.min(...g.targets) : g.targets[0];
@@ -114,34 +125,79 @@
       el("rect", { x: cx - bw / 2, y: by0, width: bw, height: bh, rx: 6, style: boxStyle }, grp);
       el("text", { x: cx, y: by0 + bh / 2 + 4, "text-anchor": "middle", text: gateLabel(g),
         style: "font-family:var(--mono);font-size:11px;fill:var(--text-primary)" }, grp);
-    }
+    });
     container.replaceChildren(s);
   }
 
   // ------------------------------------------------------------ probability bars
-  function probBars(container, probs, n) {
+  // opts.sampled: measured frequencies (bars); the exact probabilities are then drawn as ticks.
+  function probBars(container, probs, n, opts = {}) {
+    const sampled = opts.sampled;
     const N = probs.length, W = Math.max(320, N * 34 + 50), H = 200;
     const m = { l: 40, r: 10, t: 10, b: n >= 4 ? 46 : 30 };
     const s = svg(W, H + (m.b - 30));
     const ph = H - m.t - 30, pw = W - m.l - m.r, bw = pw / N;
-    const maxP = Math.max(0.25, ...probs);
+    const maxP = Math.min(1, Math.max(0.25, ...probs, ...(sampled || [])) * 1.08);
     const yv = (p) => m.t + ph - (p / maxP) * ph;
     for (const t of [0, maxP / 2, maxP]) {
       el("line", { x1: m.l, x2: W - m.r, y1: yv(t), y2: yv(t), class: "gridline" }, s);
       el("text", { x: m.l - 6, y: yv(t) + 4, "text-anchor": "end", text: t.toFixed(2) }, s);
     }
     probs.forEach((p, i) => {
-      const x0 = m.l + i * bw + 1, h = Math.max(0, m.t + ph - yv(p));
+      const x0 = m.l + i * bw + 1;
+      const bar = sampled ? sampled[i] : p;
+      const h = Math.max(0, m.t + ph - yv(bar));
       const g = el("g", {}, s);
       el("rect", { x: m.l + i * bw, y: m.t, width: bw, height: ph, style: "fill:transparent" }, g);
-      if (h > 0.5) el("rect", { x: x0, y: yv(p), width: Math.max(1, bw - 2), height: h, rx: Math.min(4, bw / 4), style: "fill:var(--series-1)" }, g);
+      if (h > 0.5) el("rect", { x: x0, y: yv(bar), width: Math.max(1, bw - 2), height: h, rx: Math.min(4, bw / 4), style: "fill:var(--series-1)" }, g);
+      if (sampled) el("line", { x1: x0 - 1, x2: x0 + bw - 1, y1: yv(p), y2: yv(p), style: "stroke:var(--text-primary);stroke-width:2.5;stroke-linecap:round" }, g);
       const ty = m.t + ph + 14;
-      const lbl = el("text", { x: x0 + bw / 2, y: ty, "text-anchor": n >= 4 ? "end" : "middle", text: `|${ket(i, n)}⟩`,
+      const lbl = el("text", { x: x0 + bw / 2, y: ty, "text-anchor": n >= 4 ? "end" : "middle", text: `|${ket(i, n)}\u27e9`,
         style: "font-family:var(--mono);font-size:10px" }, g);
       if (n >= 4) lbl.setAttribute("transform", `rotate(-50 ${x0 + bw / 2} ${ty})`);
-      hover(g, `<b>|${ket(i, n)}⟩</b><br>P = ${p.toFixed(4)}`);
+      hover(g, `<b>|${ket(i, n)}\u27e9</b><br>exact P = ${p.toFixed(4)}${sampled ? `<br>measured: ${opts.counts[i]} / ${opts.shots} = ${sampled[i].toFixed(3)}` : ""}`);
     });
     el("line", { x1: m.l, x2: W - m.r, y1: m.t + ph, y2: m.t + ph, style: "stroke:var(--text-muted)" }, s);
+    container.replaceChildren(s);
+  }
+
+  // ------------------------------------------------------------ line chart (single series + optional marker)
+  function lineChart(container, xs, ys, opts = {}) {
+    const W = 340, H = 230, m = { l: 44, r: 12, t: 12, b: 40 };
+    const s = svg(W, H);
+    const pw = W - m.l - m.r, ph = H - m.t - m.b;
+    const x0 = xs[0], x1 = xs[xs.length - 1], yMax = opts.yMax ?? Math.max(...ys);
+    const sx = (v) => m.l + ((v - x0) / (x1 - x0)) * pw;
+    const sy = (v) => m.t + ph - (v / yMax) * ph;
+    for (const t of [0, 0.25, 0.5, 0.75, 1]) {
+      const yv = t * yMax;
+      el("line", { x1: m.l, x2: m.l + pw, y1: sy(yv), y2: sy(yv), class: "gridline" }, s);
+      el("text", { x: m.l - 6, y: sy(yv) + 4, "text-anchor": "end", text: +yv.toFixed(2) }, s);
+      const xv = x0 + t * (x1 - x0);
+      el("text", { x: sx(xv), y: m.t + ph + 16, "text-anchor": "middle", text: +xv.toFixed(2) }, s);
+    }
+    el("text", { x: m.l + pw / 2, y: H - 4, "text-anchor": "middle", text: opts.xLabel || "", style: "font-size:12px;fill:var(--text-secondary)" }, s);
+    const yl = el("text", { x: 12, y: m.t + ph / 2, "text-anchor": "middle", text: opts.yLabel || "", style: "font-size:12px;fill:var(--text-secondary)" }, s);
+    yl.setAttribute("transform", `rotate(-90 12 ${m.t + ph / 2})`);
+    el("path", { d: xs.map((x, i) => `${i ? "L" : "M"}${sx(x).toFixed(1)},${sy(ys[i]).toFixed(1)}`).join(""),
+      style: "fill:none;stroke:var(--series-1);stroke-width:2;stroke-linejoin:round" }, s);
+    if (opts.marker) {
+      const { x, y, label } = opts.marker;
+      el("line", { x1: sx(x), x2: sx(x), y1: m.t, y2: m.t + ph, style: "stroke:var(--series-2);stroke-width:1.2;stroke-dasharray:4 3" }, s);
+      el("circle", { cx: sx(x), cy: sy(y), r: 5.5, style: "fill:var(--series-2);stroke:var(--surface-1);stroke-width:2" }, s);
+      if (label) el("text", { x: Math.min(sx(x) + 8, W - 60), y: Math.max(sy(y) - 8, 12), text: label, style: "font-size:11px;fill:var(--text-primary)" }, s);
+    }
+    // crosshair + tooltip
+    const cross = el("line", { y1: m.t, y2: m.t + ph, style: "stroke:var(--text-muted);stroke-width:1;opacity:0" }, s);
+    const hit = el("rect", { x: m.l, y: m.t, width: pw, height: ph, style: "fill:transparent" }, s);
+    hit.addEventListener("mousemove", (e) => {
+      const r = s.getBoundingClientRect();
+      const px = ((e.clientX - r.left) / r.width) * W;
+      const i = Math.max(0, Math.min(xs.length - 1, Math.round(((px - m.l) / pw) * (xs.length - 1))));
+      cross.setAttribute("x1", sx(xs[i])); cross.setAttribute("x2", sx(xs[i])); cross.style.opacity = 1;
+      showTip(e, `${opts.xLabel || "x"} = ${xs[i].toFixed(2)}<br>${opts.yLabel || "y"} = <b>${ys[i].toFixed(3)}</b>`);
+    });
+    hit.addEventListener("mouseleave", () => { cross.style.opacity = 0; hideTip(); });
     container.replaceChildren(s);
   }
 
@@ -247,7 +303,11 @@
       const color = cls ? "var(--series-2)" : "var(--series-1)";
       const g = el("g", { style: "cursor:pointer" }, s);
       el("circle", { cx: sx(a), cy: sy(b), r: 12, style: "fill:transparent" }, g);
-      if (opts.selected === i) el("circle", { cx: sx(a), cy: sy(b), r: 10, style: "fill:none;stroke:var(--text-primary);stroke-width:2" }, g);
+      if (opts.selected === i || opts.selectedB === i) {
+        const isB = opts.selectedB === i && opts.selected !== i;
+        el("circle", { cx: sx(a), cy: sy(b), r: 10, style: `fill:none;stroke:var(--text-primary);stroke-width:2${isB ? ";stroke-dasharray:3 2" : ""}` }, g);
+        if (opts.selectedB !== undefined) el("text", { x: sx(a) - 15, y: sy(b) - 9, text: opts.selected === i ? "A" : "B", style: "font-size:12px;font-weight:700;fill:var(--text-primary)" }, g);
+      }
       marker(g, cls, sx(a), sy(b), 5, test ? `fill:var(--surface-1);stroke:${color};stroke-width:2.5`
         : `fill:${color};stroke:var(--surface-1);stroke-width:1.5`);
       const pred = opts.predictions ? opts.predictions[i] : null;
@@ -309,5 +369,5 @@
     return c;
   }
 
-  window.Viz = { circuit, probBars, stateTable, bloch, scatter, scatterLegend, heatmap, imageCanvas, hover, showTip, hideTip, fmt, ket };
+  window.Viz = { circuit, probBars, lineChart, stateTable, bloch, scatter, scatterLegend, heatmap, imageCanvas, hover, showTip, hideTip, fmt, ket };
 })();

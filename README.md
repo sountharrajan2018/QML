@@ -1,4 +1,4 @@
-# Quantum Data Encoding Lab
+# Quantum Data Encoding Labs 
 
 An interactive teaching site, built for a guest lecture, that shows the six main ways to load classical data
 into a quantum computer for quantum machine learning:
@@ -12,15 +12,23 @@ into a quantum computer for quantum machine learning:
 | 5 | **Hamiltonian** | Ising spin-chain phases: coupling J & field h | The features are Hamiltonian parameters |
 | 6 | **IQP** | XOR quadrants | The class depends on x₁·x₂, the product term in IQP's ZZ phases |
 
-For every encoding the page shows:
+Written for UG and PG students and for faculty. Every encoding is an **8-step interactive lesson**. The main text uses
+plain language and a short scenario, and collapsible **Deeper maths** boxes hold the derivations and references.
 
-1. **Concept**: formula, step-by-step recipe, strengths and limits.
-2. **Encode one point**: pick a sample or move the sliders, toggles or pixels, then see the **circuit**, the **state
-   vector** (amplitudes and phase dials), the **measurement probabilities** and a **Bloch sphere per qubit**
-   (a vector shorter than 1 means the qubit is entangled).
-3. **Quantum kernel and classifier**: the fidelity kernel k(x,x′) = |⟨ψ(x)|ψ(x′)⟩|² over the whole dataset, a
-   kernel-ridge classifier with train and test accuracy, a **linear classical baseline**, and decision regions.
-4. **"Try this in class"** prompts for the lecture.
+| Step | What you do |
+|------|-------------|
+| 1. Idea | A scenario, the big idea, an analogy and the formula explained term by term |
+| 2. Data | Explore the dataset and pick sample A |
+| 3. Prepare | Edit sample A (sliders, bit toggles, pixel editor) and follow a live worked calculation |
+| 4. Circuit | Step through the circuit **gate by gate** (or press Play): state vector, Bloch spheres and a plain-language note on each gate |
+| 5. Measure | Simulate 10–10,000 **shots** in the Z or X basis and compare with the exact probabilities |
+| 6. Similarity | Pick samples A and B, see their kernel value k(A,B) = \|⟨ψ(A)\|ψ(B)⟩\|², check it against the closed form, slide B along a feature, list A's nearest neighbours |
+| 7. Classify | Kernel matrix, a kernel classifier's train/test accuracy against a **linear classical baseline**, decision regions |
+| 8. Recap & quiz | Takeaway, strengths and limits, a 3-question quiz with explanations, and tested **Qiskit** code |
+
+Other features: deep links to any step (`#phase/4`), <kbd>←</kbd>/<kbd>→</kbd> keys between steps, hover definitions for
+dotted terms, an encoding chooser on the overview page, a qubit and gate cost calculator on the comparison page,
+dark mode and A−/A+ text size for projectors.
 
 ## Monorepo layout
 
@@ -28,14 +36,13 @@ For every encoding the page shows:
 .
 ├── backend/                     Python (Flask + NumPy)
 │   ├── app.py                   REST API; also serves the frontend locally
-│   ├── api/index.py             Vercel serverless entry point
 │   ├── qml_encodings/
 │   │   ├── simulator.py         State-vector simulator, Bloch vectors
 │   │   ├── encodings.py         The six encoding circuits and their metadata
 │   │   ├── datasets.py          Synthetic datasets, one per encoding
 │   │   └── kernels.py           Fidelity kernel, kernel-ridge classifier, baseline
 │   ├── scripts/export_static.py Writes the datasets to frontend/data/ for static hosting
-│   ├── tests/                   pytest (physics checks, API, JS-vs-Python parity)
+│   ├── tests/                   pytest (physics checks, API, JS-vs-Python parity, Qiskit snippets)
 │   └── requirements.txt
 ├── frontend/                    Plain HTML / CSS / JavaScript, no build step
 │   ├── index.html
@@ -43,11 +50,12 @@ For every encoding the page shows:
 │   ├── js/quantum.js            JavaScript port of the simulator (offline / GitHub Pages)
 │   ├── js/engine.js             Uses the Python API when reachable, else the JS port
 │   ├── js/viz.js                SVG circuits, Bloch spheres, charts
-│   ├── js/content.js            Lecture text
-│   ├── js/app.js                Pages and interaction
+│   ├── js/content.js            Lesson text, quizzes, Qiskit snippets, glossary
+│   ├── js/lesson.js             The 8-step lesson page for each encoding
+│   ├── js/util.js               Shared helpers
+│   ├── js/app.js                Routing, overview and comparison pages
 │   └── data/                    Exported datasets and metadata (JSON)
-├── vercel.json                  Vercel deployment (static frontend + Python function)
-└── .github/workflows/           GitHub Pages deployment and tests
+└── .github/workflows/pages.yml  Runs the tests, then publishes frontend/ to GitHub Pages
 ```
 
 ## Run locally
@@ -66,21 +74,25 @@ python -m http.server 8000 -d frontend   # http://localhost:8000
 The **Engine** menu in the top bar shows which engine is running and lets you switch between them. Use **A− / A+**
 to resize text for a projector, and ◐ for dark mode.
 
-## Deploy
+## Deploy to GitHub Pages
 
-### Vercel (frontend + Python backend)
+The published site is the `frontend/` folder only. GitHub Pages cannot run Python, so on Pages the site uses
+`js/quantum.js`, a JavaScript port of the backend that gives the same results (checked by
+`backend/tests/test_js_parity.py`). The backend is for local use and for the API.
 
-Import the repository in Vercel and deploy. No settings are needed: `vercel.json` builds `backend/api/index.py`
-as a Python function at `/api/*` and serves `frontend/` as static files.
+One-time setup:
 
-### GitHub Pages (frontend only)
+1. Open the repository on GitHub and go to **Settings → Pages**.
+2. Under **Build and deployment → Source**, choose **GitHub Actions**.
+3. Go to **Actions → Test and deploy to GitHub Pages → Run workflow**, or push to the default branch.
 
-1. In the repository go to **Settings → Pages → Source: GitHub Actions**.
-2. Push to `main`. `.github/workflows/pages.yml` publishes `frontend/`.
+`.github/workflows/pages.yml` runs the tests first and deploys only if they pass. The site appears at
+`https://<user>.github.io/<repo>/`.
 
-There is no Python server on Pages, so the site uses `js/quantum.js`, which gives the same results
-(checked by `backend/tests/test_js_parity.py`). To use a Vercel backend from the Pages site anyway,
-open `https://<user>.github.io/<repo>/?api=https://<your-app>.vercel.app`.
+If you change a dataset in `backend/qml_encodings/datasets.py`, run `python backend/scripts/export_static.py`
+before pushing so `frontend/data/` matches. The tests fail, and nothing deploys, until you do.
+
+To use a running Python backend from the Pages site, add `?api=https://<your-backend>` to the URL.
 
 ## API
 
@@ -98,7 +110,7 @@ open `https://<user>.github.io/<repo>/?api=https://<your-app>.vercel.app`.
 ## Tests
 
 ```bash
-pip install pytest
+pip install pytest qiskit      # qiskit is optional: without it the snippet tests are skipped
 python -m pytest -q backend/tests
 ```
 

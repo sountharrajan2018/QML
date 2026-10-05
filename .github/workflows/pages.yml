@@ -1,11 +1,13 @@
-# Publishes frontend/ to GitHub Pages. With no backend there, the site
-# automatically switches to its in-browser JavaScript engine.
-# One-time setup: Settings -> Pages -> Source: "GitHub Actions".
-name: Deploy frontend to GitHub Pages
+# Tests the code, then publishes frontend/ to GitHub Pages.
+# The site needs no server: on Pages it runs the in-browser JavaScript engine.
+#
+# One-time setup: repository Settings -> Pages -> Build and deployment ->
+# Source: "GitHub Actions". After that every push to the default branch deploys.
+name: Test and deploy to GitHub Pages
 
 on:
   push:
-    branches: [main]
+  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -14,11 +16,30 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
+  group: pages-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      # qiskit is only needed to test the Qiskit snippets shown in the lessons.
+      - run: pip install -r backend/requirements.txt pytest qiskit
+      # Includes the checks that frontend/data is in sync with the backend datasets,
+      # that the JavaScript engine matches the Python one and that the Qiskit snippets run.
+      - run: python -m pytest -q backend/tests
+
   deploy:
+    needs: test
+    # Only the default branch is published.
+    if: github.event_name != 'pull_request' && github.ref_name == github.event.repository.default_branch
     runs-on: ubuntu-latest
     environment:
       name: github-pages

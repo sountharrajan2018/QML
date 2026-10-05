@@ -1,4 +1,4 @@
-# Quantum Data Encoding Lab
+# Quantum Data Encoding Labs 
 
 An interactive teaching site, built for a guest lecture, that shows the six main ways to load classical data
 into a quantum computer for quantum machine learning:

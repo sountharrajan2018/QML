@@ -28,7 +28,6 @@ For every encoding the page shows:
 .
 ├── backend/                     Python (Flask + NumPy)
 │   ├── app.py                   REST API; also serves the frontend locally
-│   ├── api/index.py             Vercel serverless entry point
 │   ├── qml_encodings/
 │   │   ├── simulator.py         State-vector simulator, Bloch vectors
 │   │   ├── encodings.py         The six encoding circuits and their metadata
@@ -46,7 +45,7 @@ For every encoding the page shows:
 │   ├── js/content.js            Lecture text
 │   ├── js/app.js                Pages and interaction
 │   └── data/                    Exported datasets and metadata (JSON)
-├── vercel.json                  Vercel deployment (static frontend + Python function)
+├── vercel.json                  Vercel services: "frontend" (static) + "backend" (Flask)
 └── .github/workflows/           GitHub Pages deployment and tests
 ```
 
@@ -70,8 +69,15 @@ to resize text for a projector, and ◐ for dark mode.
 
 ### Vercel (frontend + Python backend)
 
-Import the repository in Vercel and deploy. No settings are needed: `vercel.json` builds `backend/api/index.py`
-as a Python function at `/api/*` and serves `frontend/` as static files.
+`vercel.json` defines one Vercel project with two **services**:
+
+| Service | Root | Public path |
+|---------|------|-------------|
+| `backend` | `backend/` (Flask, `app.py`) | `/api/*` |
+| `frontend` | `frontend/` (static files) | everything else |
+
+The browser calls the API on the same domain (`api/...`), so neither service calls the other server-side and no
+bindings are needed. Test locally with `vercel dev`, then import the repository in Vercel and deploy.
 
 ### GitHub Pages (frontend only)
 

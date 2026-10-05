@@ -1,7 +1,8 @@
 """Flask API for the QML encodings demo.
 
 Local:   python backend/app.py   -> http://localhost:5000 (also serves the frontend)
-Vercel:  backend/api/index.py imports ``app`` from here.
+Vercel:  the "backend" service (Flask, root backend/) runs this ``app``; the
+         top-level rewrite sends /api/* here, so routes keep their /api prefix.
 """
 from __future__ import annotations
 
@@ -120,7 +121,8 @@ def superposition():
     return jsonify(report)
 
 
-# ------------------------------------------------------------- static frontend (local dev)
+# ------------------------------------------------------------- static frontend (local dev only;
+# on Vercel the separate "frontend" service serves these files)
 
 @app.get("/")
 def index():

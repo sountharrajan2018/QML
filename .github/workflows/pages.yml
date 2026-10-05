@@ -30,9 +30,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-      - run: pip install -r backend/requirements.txt pytest
-      # Includes the check that frontend/data is in sync with the backend datasets
-      # and that the JavaScript engine matches the Python one.
+      # qiskit is only needed to test the Qiskit snippets shown in the lessons.
+      - run: pip install -r backend/requirements.txt pytest qiskit
+      # Includes the checks that frontend/data is in sync with the backend datasets,
+      # that the JavaScript engine matches the Python one and that the Qiskit snippets run.
       - run: python -m pytest -q backend/tests
 
   deploy:

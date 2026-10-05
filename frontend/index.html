@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quantum Data Encoding Lab</title>
+  <meta name="description" content="Interactive demos of basis, angle, phase, amplitude, Hamiltonian and IQP encoding for quantum machine learning.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='none' stroke='%232a78d6' stroke-width='3'/%3E%3Cpath d='M16 16 L24 7' stroke='%23eb6834' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <button class="icon-btn menu-btn" id="menuBtn" aria-label="Open navigation">&#9776;</button>
+    <a class="brand" href="#overview">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span>Quantum Data Encoding Lab</span>
+    </a>
+    <div class="topbar-controls">
+      <label class="engine-pick" title="Which engine runs the simulations">
+        <span class="engine-dot" id="engineDot"></span>
+        <select id="engineSelect" aria-label="Simulation engine">
+          <option value="auto">Engine: auto</option>
+          <option value="python">Python API</option>
+          <option value="js">In-browser JS</option>
+        </select>
+      </label>
+      <button class="icon-btn" id="fontDown" aria-label="Smaller text">A&minus;</button>
+      <button class="icon-btn" id="fontUp" aria-label="Larger text">A+</button>
+      <button class="icon-btn" id="themeBtn" aria-label="Toggle dark mode">&#9680;</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <nav class="sidebar" id="sidebar" aria-label="Encodings">
+      <a href="#overview" data-view="overview">Overview</a>
+      <div class="nav-label">Encodings</div>
+      <a href="#basis" data-view="basis"><span class="nav-num">1</span>Basis</a>
+      <a href="#angle" data-view="angle"><span class="nav-num">2</span>Angle</a>
+      <a href="#phase" data-view="phase"><span class="nav-num">3</span>Phase</a>
+      <a href="#amplitude" data-view="amplitude"><span class="nav-num">4</span>Amplitude</a>
+      <a href="#hamiltonian" data-view="hamiltonian"><span class="nav-num">5</span>Hamiltonian</a>
+      <a href="#iqp" data-view="iqp"><span class="nav-num">6</span>IQP</a>
+      <div class="nav-label">Wrap-up</div>
+      <a href="#compare" data-view="compare">Comparison</a>
+      <p class="engine-note" id="engineNote">Connecting&hellip;</p>
+    </nav>
+    <main id="view" tabindex="-1"></main>
+  </div>
+
+  <div class="tooltip" id="tooltip" role="tooltip" hidden></div>
+
+  <script src="js/quantum.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/viz.js"></script>
+  <script src="js/content.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,111 @@
+/* Lecture text for every encoding page. Formulas are plain HTML so the site works offline. */
+window.CONTENT = {
+  basis: {
+    num: 1,
+    tagline: "Write the bits of your data straight into the qubits.",
+    formula: "x = (b<sub>1</sub>, b<sub>2</sub>, &hellip;, b<sub>n</sub>) &isin; {0,1}<sup>n</sup> &nbsp;&rarr;&nbsp; |x&rang; = |b<sub>1</sub> b<sub>2</sub> &hellip; b<sub>n</sub>&rang;",
+    how: [
+      "Start every qubit in |0&rang;.",
+      "Apply an <b>X</b> (NOT) gate to each qubit whose bit is 1.",
+      "The register is now exactly one computational basis state: the binary record.",
+      "A whole dataset can be loaded as a superposition: |D&rang; = (1/&radic;M) &Sigma;<sub>m</sub> |x<sup>m</sup>&rang;.",
+    ],
+    why: "Yes/no animal traits are already bits, so they need no rescaling. Each animal becomes one of the 2<sup>4</sup> = 16 basis states.",
+    try: [
+      "Toggle traits and watch the single 100% probability bar move to the new basis state.",
+      "Look at the kernel: it is 1 only for <b>identical</b> bit strings and 0 for everything else. Dog and Cat share a state, so they are indistinguishable.",
+      "Load the whole training set in superposition: measuring then returns each animal with its frequency in the data.",
+    ],
+    takeaway: "Basis encoding is exact and cheap, but different inputs give orthogonal states. A kernel model can only memorise exact matches, so it is mainly used as input to quantum algorithms (oracles, arithmetic, Grover search).",
+  },
+  angle: {
+    num: 2,
+    tagline: "One feature, one qubit, one rotation.",
+    formula: "|x&rang; = &otimes;<sub>i</sub> R<sub>Y</sub>(x<sub>i</sub>)|0&rang; = &otimes;<sub>i</sub> [ cos(x<sub>i</sub>/2)|0&rang; + sin(x<sub>i</sub>/2)|1&rang; ]",
+    how: [
+      "Rescale each feature into [0, &pi;] so that the minimum maps to |0&rang; and the maximum to |1&rang;.",
+      "Rotate qubit <i>i</i> about the Y axis by x<sub>i</sub>.",
+      "All rotations are parallel: depth 1, no entanglement (a product state).",
+      "Induced kernel: k(x, x&prime;) = &prod;<sub>i</sub> cos<sup>2</sup>((x<sub>i</sub> &minus; x&prime;<sub>i</sub>)/2).",
+    ],
+    why: "Sugar and firmness are bounded readings (0&ndash;10). A bounded value maps cleanly onto a rotation angle between |0&rang; and |1&rang;.",
+    try: [
+      "Drag <i>sugar</i> from 0 to 10: qubit 0's Bloch vector swings from the north pole (|0&rang;) to the south pole (|1&rang;).",
+      "Every Bloch vector has length 1: angle encoding never entangles.",
+      "Compare the decision boundary with the linear baseline: for blob-like data both do well.",
+    ],
+    takeaway: "Angle encoding is the workhorse of near-term QML: shallow, hardware-friendly and smooth. Its limits: one qubit per feature and no entanglement, so it gives a fairly simple kernel.",
+  },
+  phase: {
+    num: 3,
+    tagline: "Hide the data in relative phases: periodic by design.",
+    formula: "|x&rang; = &otimes;<sub>i</sub> P(x<sub>i</sub>) H|0&rang; = &otimes;<sub>i</sub> (|0&rang; + e<sup>i x<sub>i</sub></sup>|1&rang;) / &radic;2",
+    how: [
+      "Put each qubit on the equator with a Hadamard: (|0&rang; + |1&rang;)/&radic;2.",
+      "Apply a phase gate P(x<sub>i</sub>) that rotates it around the Z axis by the feature value.",
+      "Because e<sup>i(x+2&pi;)</sup> = e<sup>ix</sup>, values 2&pi; apart give <b>the same state</b>.",
+      "Kernel: k(x, x&prime;) = &prod;<sub>i</sub> cos<sup>2</sup>((x<sub>i</sub> &minus; x&prime;<sub>i</sub>)/2), now on a circle (a torus for 2 features).",
+    ],
+    why: "Wind direction and hour of day are cyclic: 359&deg; is next to 1&deg; and 23:00 is next to 01:00. Phase encoding respects this wrap-around automatically; a linear model on raw numbers cannot.",
+    try: [
+      "Look at the probability bars: they are <b>all equal (0.25)</b> whatever the input. The information is only in the phases (the dials in the table), so you must interfere before measuring.",
+      "Set wind direction to 2&deg;, then 358&deg;: almost the same state. On the raw axis they are 356 apart.",
+      "The fog-alert class sits in the four corners of the raw plot. The quantum kernel joins them up; the linear baseline cannot.",
+    ],
+    takeaway: "Phase encoding is the right choice for angles, times and other periodic quantities. Remember that Z-basis measurement alone cannot see the encoded data.",
+  },
+  amplitude: {
+    num: 4,
+    tagline: "Store N numbers in the amplitudes of log<sub>2</sub>N qubits.",
+    formula: "|x&rang; = (1/&Vert;x&Vert;) &Sigma;<sub>i=0</sub><sup>N&minus;1</sup> x<sub>i</sub> |i&rang; &nbsp;&nbsp; (N = 16 pixels &rarr; 4 qubits)",
+    how: [
+      "Flatten the 4&times;4 image to a 16-dim vector and normalise it to unit length.",
+      "Load it with a binary tree of rotations (M&ouml;tt&ouml;nen et al.): qubit <i>k</i> gets R<sub>Y</sub> rotations controlled on qubits 0&hellip;k&minus;1.",
+      "Each rotation angle splits the probability mass between the left and right half of a sub-tree.",
+      "Kernel: k(x, x&prime;) = (x&middot;x&prime; / &Vert;x&Vert;&Vert;x&prime;&Vert;)<sup>2</sup>, the squared cosine similarity.",
+    ],
+    why: "Images are long vectors of non-negative intensities. Amplitude encoding is the most compact way to store them: 16 pixels on just 4 qubits, and a 1-megapixel image would need only 20.",
+    try: [
+      "Click pixels in the editor: the probability of each basis state |i&rang; is pixel i squared over the total, so the bar chart <b>is</b> the image.",
+      "Count the gates: 15 controlled rotations for 4 qubits. Loading costs O(N) gates in general; that is the catch.",
+      "In the kernel, all horizontal bars overlap strongly, and so do all vertical bars, so the classes form clear blocks.",
+    ],
+    takeaway: "Amplitude encoding gives exponential compression and a cosine-similarity kernel, but preparing an arbitrary state needs deep circuits and loses the vector's norm.",
+  },
+  hamiltonian: {
+    num: 5,
+    tagline: "Let the data be the physics: encode x as the time evolution e<sup>&minus;iH(x)t</sup>.",
+    formula: "|x&rang; = e<sup>&minus;i H(x) t</sup> |+&rang;<sup>&otimes;n</sup>, &nbsp; H(J, h) = &minus;J &Sigma;<sub>i</sub> Z<sub>i</sub>Z<sub>i+1</sub> &minus; h &Sigma;<sub>i</sub> X<sub>i</sub>",
+    how: [
+      "Choose a Hamiltonian whose parameters are the data, here the transverse-field Ising chain with coupling J and field h.",
+      "Prepare |+++&rang; with Hadamards.",
+      "Simulate e<sup>&minus;iHt</sup> by <b>Trotterisation</b>: alternate ZZ rotations (coupling) and X rotations (field) in small time steps (t = 1, 2 steps).",
+      "Different (J, h) drive different dynamics, and the final states encode the data, entanglement included.",
+    ],
+    why: "Each sample is a magnet described by (J, h). Its label is the phase of matter: ordered when h &lt; J and disordered when h &gt; J. The features <i>are</i> Hamiltonian parameters, so evolving under that Hamiltonian is the natural encoding.",
+    try: [
+      "Set h = 0: only ZZ terms act and the Bloch vectors stay on the equator. Then increase h.",
+      "Watch the Bloch vector lengths fall below 1: the time evolution entangles the spins.",
+      "Look at the decision boundary along the diagonal h = J, the physical phase transition.",
+    ],
+    takeaway: "Hamiltonian encoding links QML to quantum simulation: natural for physics and chemistry data. The design choices are the Hamiltonian, the evolution time and the Trotter depth.",
+  },
+  iqp: {
+    num: 6,
+    tagline: "Instantaneous Quantum Polynomial circuits: Hadamards around a diagonal layer with feature products.",
+    formula: "|x&rang; = (U<sub>Z</sub>(x) H<sup>&otimes;n</sup>)<sup>reps</sup>|0&rang;, &nbsp; U<sub>Z</sub>(x) = exp( i[&Sigma;<sub>i</sub> x<sub>i</sub>Z<sub>i</sub> + &Sigma;<sub>i&lt;j</sub> (&pi;&minus;x<sub>i</sub>)(&pi;&minus;x<sub>j</sub>) Z<sub>i</sub>Z<sub>j</sub>] )",
+    how: [
+      "Hadamards create a uniform superposition.",
+      "A <b>diagonal</b> layer adds phases: single-feature terms R<sub>Z</sub>(2x<sub>i</sub>) and pairwise <b>products</b> of features in ZZ(2(&pi;&minus;x<sub>i</sub>)(&pi;&minus;x<sub>j</sub>)) gates.",
+      "Repeat the block <i>reps</i> times (Havl&iacute;&ccaron;ek et al., Nature 2019 use 2). Sampling such circuits is believed to be classically hard.",
+      "The product terms let the kernel depend on interactions between features.",
+    ],
+    why: "In XOR data the class is the sign of x<sub>1</sub>&middot;x<sub>2</sub>: it depends only on how the two features interact. No straight line separates it, but IQP's ZZ phases contain exactly that product.",
+    try: [
+      "Compare the test accuracy with the linear baseline (about 65%).",
+      "Switch <b>reps</b> from 1 to 2: training accuracy stays high but test accuracy drops. A more expressive feature map can overfit.",
+      "Pick a point and watch both Bloch vectors shrink: the ZZ gate entangles the qubits.",
+    ],
+    takeaway: "IQP and ZZ feature maps are the standard choice for quantum kernel methods: entangling, non-linear and hard to simulate at scale. Watch out for overfitting and, at many qubits, exponential kernel concentration.",
+  },
+};

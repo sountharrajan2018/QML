@@ -2,14 +2,17 @@
  * Engine: talks to the Python API when it is reachable and falls back to the
  * in-browser QuantumJS port otherwise (GitHub Pages, offline lecture hall).
  *
- * API location: same origin by default ("api/..."). Point a static deployment
- * at a remote backend with ?api=https://your-app.vercel.app
+ * API location: same origin by default ("api/..."). On GitHub Pages there is
+ * no backend, so the JS engine is used; point the page at a running backend
+ * with ?api=https://your-backend.example.com
  */
 (function () {
   "use strict";
   const params = new URLSearchParams(location.search);
   const API_BASE = (params.get("api") || "").replace(/\/$/, "");
   const url = (p) => (API_BASE ? `${API_BASE}/api/${p}` : `api/${p}`);
+  // Static hosts (GitHub Pages) have no backend: skip the probe unless ?api= points at one.
+  const STATIC_HOST = /\.github\.io$/.test(location.hostname) || location.protocol === "file:";
 
   const state = { mode: "auto", pythonOk: false, datasets: null, encodings: null, cache: new Map() };
 
@@ -31,11 +34,13 @@
   }, 30000);
 
   async function init() {
-    try {
-      const h = await fetchJSON(url("health"), {}, 3000);
-      state.pythonOk = h.status === "ok";
-    } catch (_) {
-      state.pythonOk = false;
+    if (!STATIC_HOST || API_BASE) {
+      try {
+        const h = await fetchJSON(url("health"), {}, 3000);
+        state.pythonOk = h.status === "ok";
+      } catch (_) {
+        state.pythonOk = false;
+      }
     }
     const usePy = state.pythonOk;
     state.datasets = await (usePy ? fetchJSON(url("datasets")) : fetchJSON("data/datasets.json"));

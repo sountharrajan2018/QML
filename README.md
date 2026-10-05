@@ -45,8 +45,7 @@ For every encoding the page shows:
 │   ├── js/content.js            Lecture text
 │   ├── js/app.js                Pages and interaction
 │   └── data/                    Exported datasets and metadata (JSON)
-├── vercel.json                  Vercel services: "frontend" (static) + "backend" (Flask)
-└── .github/workflows/           GitHub Pages deployment and tests
+└── .github/workflows/pages.yml  Runs the tests, then publishes frontend/ to GitHub Pages
 ```
 
 ## Run locally
@@ -65,28 +64,25 @@ python -m http.server 8000 -d frontend   # http://localhost:8000
 The **Engine** menu in the top bar shows which engine is running and lets you switch between them. Use **A− / A+**
 to resize text for a projector, and ◐ for dark mode.
 
-## Deploy
+## Deploy to GitHub Pages
 
-### Vercel (frontend + Python backend)
+The published site is the `frontend/` folder only. GitHub Pages cannot run Python, so on Pages the site uses
+`js/quantum.js`, a JavaScript port of the backend that gives the same results (checked by
+`backend/tests/test_js_parity.py`). The backend is for local use and for the API.
 
-`vercel.json` defines one Vercel project with two **services**:
+One-time setup:
 
-| Service | Root | Public path |
-|---------|------|-------------|
-| `backend` | `backend/` (Flask, `app.py`) | `/api/*` |
-| `frontend` | `frontend/` (static files) | everything else |
+1. Open the repository on GitHub and go to **Settings → Pages**.
+2. Under **Build and deployment → Source**, choose **GitHub Actions**.
+3. Go to **Actions → Test and deploy to GitHub Pages → Run workflow**, or push to the default branch.
 
-The browser calls the API on the same domain (`api/...`), so neither service calls the other server-side and no
-bindings are needed. Test locally with `vercel dev`, then import the repository in Vercel and deploy.
+`.github/workflows/pages.yml` runs the tests first and deploys only if they pass. The site appears at
+`https://<user>.github.io/<repo>/`.
 
-### GitHub Pages (frontend only)
+If you change a dataset in `backend/qml_encodings/datasets.py`, run `python backend/scripts/export_static.py`
+before pushing so `frontend/data/` matches. The tests fail, and nothing deploys, until you do.
 
-1. In the repository go to **Settings → Pages → Source: GitHub Actions**.
-2. Push to `main`. `.github/workflows/pages.yml` publishes `frontend/`.
-
-There is no Python server on Pages, so the site uses `js/quantum.js`, which gives the same results
-(checked by `backend/tests/test_js_parity.py`). To use a Vercel backend from the Pages site anyway,
-open `https://<user>.github.io/<repo>/?api=https://<your-app>.vercel.app`.
+To use a running Python backend from the Pages site, add `?api=https://<your-backend>` to the URL.
 
 ## API
 

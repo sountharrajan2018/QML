@@ -39,7 +39,7 @@
     $("#engineDot").className = "engine-dot " + (py ? "py" : "js");
     $("#engineNote").innerHTML = py
       ? "Simulations run on the <b>Python / NumPy backend</b>."
-      : `Simulations run <b>in your browser</b> (JavaScript port of the backend).${Engine.state.pythonOk ? "" : " The Python API was not reachable, which is expected on GitHub Pages."}`;
+      : `Simulations run <b>in your browser</b> (JavaScript port of the backend).${Engine.state.pythonOk ? "" : " No Python server is needed, so this works on GitHub Pages and offline."}`;
     const opt = $('#engineSelect option[value="python"]');
     opt.disabled = !Engine.state.pythonOk;
     opt.textContent = Engine.state.pythonOk ? "Python API" : "Python API (offline)";

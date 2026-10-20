@@ -59,7 +59,7 @@
     });
   }
 
-  // ------------------------------------------------------------ routing: #overview, #compare, #<encoding>[/<step>]
+  // ------------------------------------------------------------ routing: #overview, #compare, #libraries, #<encoding>[/<step>]
   function route(force) {
     const [id, stepStr] = (location.hash || "#overview").slice(1).split("/");
     Viz.hideTip();
@@ -76,8 +76,9 @@
     Lesson.leave();
     renderToken++;
     if (id === "compare") renderCompare();
+    else if (id === "libraries") renderLibraries();
     else renderOverview();
-    updateSidebar(id === "compare" ? "compare" : "overview");
+    updateSidebar(id === "compare" || id === "libraries" ? id : "overview");
     U.bindTerms(view);
     view.focus({ preventScroll: true });
     window.scrollTo(0, 0);
@@ -214,6 +215,39 @@
         $(`#acc-${id}`).innerHTML = `<span class="error">error</span>`;
       }
     }
+  }
+
+  // ------------------------------------------------------------ open-source libraries
+  function renderLibraries() {
+    const link = (href, text) => `<a href="${href}" target="_blank" rel="noopener">${text}</a>`;
+    const cards = LIBRARIES.map((l) => `<div class="card">
+        <h3>${l.name}</h3>
+        <p class="sub">${l.org}</p>
+        <p>${l.blurb}</p>
+        <div class="chips"><span class="chip">${l.license}</span></div>
+        <pre class="code"><code>pip install ${l.pip}</code></pre>
+        <p class="card-foot">${link(l.repo, "Source on GitHub")} &middot; ${link(l.docs, "Docs")}</p>
+      </div>`).join("");
+    const head = LIBRARIES.map((l) => `<th>${l.name}</th>`).join("");
+    const rows = ORDER.map((id) => `<tr><td><a href="#${id}/1"><b>${meta(id).name}</b></a></td>${LIBRARIES.map((l) =>
+      `<td>${l.api[id] ? `<code>${esc(l.api[id])}</code>` : `<span class="sub">&mdash;</span>`}</td>`).join("")}</tr>`).join("");
+    view.innerHTML = `
+      <section class="hero"><div class="eyebrow">Wrap-up</div><h1>Open-source libraries</h1>
+      <p class="lead">This lab uses its own small NumPy simulator so every step is visible. For real projects, these free,
+      open-source libraries build the same encodings for you and run them on simulators or real quantum hardware.</p></section>
+
+      <div class="grid grid-2">${cards}</div>
+
+      <h2 class="section-title">Where each encoding lives</h2>
+      <div class="card"><div class="table-wrap" style="max-height:none"><table class="data">
+        <thead><tr><th>Encoding</th>${head}</tr></thead><tbody>${rows}</tbody></table></div>
+        <p class="sub" style="margin-top:10px">A dash means the library has no gate-model version of that encoding. D-Wave annealers
+        take binary variables and an Ising energy, which match basis and Hamiltonian encoding.</p></div>
+
+      <div class="callout"><strong>Where to start.</strong> For QML experiments with gradients, try <b>PennyLane</b>: one line per
+      embedding. For IBM hardware and the Qiskit code in each lesson's recap, use <b>Qiskit</b>. For optimisation problems
+      written as QUBOs, use <b>D-Wave Ocean</b>.</div>
+      <div class="footer-nav"><a class="btn" href="#compare">&larr; Comparison</a><a class="btn" href="#overview">Back to overview &rarr;</a></div>`;
   }
 
   // ------------------------------------------------------------ boot

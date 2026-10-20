@@ -29,6 +29,8 @@ plain language and a short scenario, and collapsible **Deeper maths** boxes hold
 Other features: deep links to any step (`#phase/4`), <kbd>←</kbd>/<kbd>→</kbd> keys between steps, hover definitions for
 dotted terms, an encoding chooser on the overview page, a qubit and gate cost calculator on the comparison page,
 dark mode and A−/A+ text size for projectors.
+An **Open-source libraries** page lists PennyLane, Qiskit, D-Wave Ocean and Cirq (licence, `pip install`, GitHub and docs
+links) with a table of the function each library uses for each of the six encodings.
 
 ## Monorepo layout
 

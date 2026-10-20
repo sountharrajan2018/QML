@@ -427,9 +427,51 @@ print(round(k, 4))`,
     { label: "Features that interact (XOR-like)", enc: "iqp" },
   ];
 
+  // ------------------------------------------------------------ open-source libraries page
+  // `api` maps each encoding to how that library builds it (null: not a gate-model feature).
+  const LIBRARIES = [
+    {
+      name: "PennyLane", org: "Xanadu", license: "Apache-2.0", pip: "pennylane",
+      repo: "https://github.com/PennyLaneAI/pennylane", docs: "https://docs.pennylane.ai",
+      blurb: "Differentiable quantum programming. Ready-made embedding templates and autodiff with NumPy, PyTorch or JAX.",
+      api: {
+        basis: "qml.BasisEmbedding", angle: "qml.AngleEmbedding", phase: "qml.Hadamard + qml.PhaseShift",
+        amplitude: "qml.AmplitudeEmbedding", hamiltonian: "qml.ApproxTimeEvolution", iqp: "qml.IQPEmbedding",
+      },
+    },
+    {
+      name: "Qiskit", org: "IBM", license: "Apache-2.0", pip: "qiskit qiskit-machine-learning",
+      repo: "https://github.com/Qiskit/qiskit", docs: "https://docs.quantum.ibm.com",
+      blurb: "Circuits, transpiler and IBM hardware access. qiskit-machine-learning adds quantum kernels and QNNs. Used for the code in every lesson here.",
+      api: {
+        basis: "QuantumCircuit.x", angle: "QuantumCircuit.ry", phase: "z_feature_map",
+        amplitude: "StatePreparation", hamiltonian: "PauliEvolutionGate", iqp: "zz_feature_map",
+      },
+    },
+    {
+      name: "D-Wave Ocean", org: "D-Wave", license: "Apache-2.0", pip: "dwave-ocean-sdk",
+      repo: "https://github.com/dwavesystems/dwave-ocean-sdk", docs: "https://docs.ocean.dwavesys.com",
+      blurb: "Quantum annealing, not gate circuits. Data becomes binary variables and the problem becomes an Ising / QUBO energy to minimise.",
+      api: {
+        basis: "dimod binary variables", angle: null, phase: null,
+        amplitude: null, hamiltonian: "dimod.BinaryQuadraticModel (Ising)", iqp: null,
+      },
+    },
+    {
+      name: "Cirq", org: "Google Quantum AI", license: "Apache-2.0", pip: "cirq",
+      repo: "https://github.com/quantumlib/Cirq", docs: "https://quantumai.google/cirq",
+      blurb: "Low-level circuits for near-term devices. TensorFlow Quantum builds hybrid models on top of it.",
+      api: {
+        basis: "cirq.X", angle: "cirq.ry", phase: "cirq.H + cirq.ZPowGate",
+        amplitude: "cirq.StatePreparationChannel", hamiltonian: "cirq.PauliSum + exponentiation", iqp: "cirq.ZZPowGate",
+      },
+    },
+  ];
+
   window.CONTENT = CONTENT;
   window.GLOSSARY = GLOSSARY;
   window.WORKED = WORKED;
   window.CLOSED_FORM = CLOSED_FORM;
   window.CHOOSER = CHOOSER;
+  window.LIBRARIES = LIBRARIES;
 })();
